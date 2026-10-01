@@ -25,6 +25,7 @@ a pinned canonical release. See [migration](migration.md) for compatibility.
 
 ```bash
 go test -race ./...
+go test -race -tags integration ./internal/apps/codexacpbridge
 go tool golangci-lint run
 go mod verify
 go tool govulncheck ./...
