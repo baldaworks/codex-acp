@@ -151,8 +151,12 @@ The npm package `codex-acp` selects one native binary package:
 - `@baldaworks/codex-acp-linux-arm64`
 - `@baldaworks/codex-acp-win32-x64`
 
-All packages use the corresponding upstream version; the initial fork baseline
-is upstream `v1.9.2`. The fork does not start a separate version sequence.
+The legacy package `@normahq/codex-acp-bridge` shares the same native packages
+and provides both `codex-acp` and the legacy `codex-acp-bridge` command.
+
+All seven packages use the same release version. The initial release was
+`1.9.2`, matching upstream `v1.9.2`; fork patch `1.9.3` adds the legacy alias
+on that baseline. Original upstream tags remain unchanged.
 Maintainer instructions for the initial npm publication with browser 2FA and
 subsequent trusted publishing are in [docs/releasing.md](docs/releasing.md).
 

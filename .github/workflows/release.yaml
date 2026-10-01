@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Resolve upstream version
+      - name: Resolve release version and verify upstream baseline
         env:
           RELEASE_REF: ${{ github.ref_name }}
         run: |

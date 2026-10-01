@@ -24,6 +24,8 @@ profiles:
     distributions:
       npm:
         package: codex-acp
+        aliases:
+          - '@normahq/codex-acp-bridge'
         platform-package: '@baldaworks/codex-acp'
         description: Run Codex as an Agent Client Protocol (ACP) agent.
         registry: https://registry.npmjs.org

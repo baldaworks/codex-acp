@@ -40,10 +40,11 @@ go tool golangci-lint run
 ## Release
 
 - Omnidist profile is authoritative (`.omnidist/omnidist.yaml`).
-- Preserve upstream versions and original `v*` tags. `scripts/release-version.sh` validates the canonical upstream tag and ancestry before producing `OMNIDIST_VERSION` (`version.source: env`).
-- Initial npm publication uses the npm CLI with web 2FA. Configure trusted publishing for all six packages afterward.
+- Preserve original upstream `v*` tags. Release versions normally match upstream; user-authorized fork patches may advance the version (1.9.3 on v1.9.2 for the legacy alias). `.omnidist/upstream-tag` records the canonical baseline; `scripts/release-version.sh` validates its ancestry before producing `OMNIDIST_VERSION` (`version.source: env`).
+- After npm staging, run `node scripts/npm-legacy-bin.cjs` to retain the legacy executable. Verify and publish the same staged artifacts.
+- Initial npm publication uses the npm CLI with web 2FA. Configure trusted publishing for all seven packages afterward.
 - Subsequent npm publication uses `.github/workflows/omnidist-release.yml` and OIDC; fork release tags are `codex-acp/vX.Y.Z`, or dispatch the workflow with the corresponding upstream tag.
-- See `docs/releasing.md`; do not invent a version or move an upstream tag to release the fork.
+- See `docs/releasing.md`; do not move an upstream tag or increment a version merely to retry a failed publish.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker

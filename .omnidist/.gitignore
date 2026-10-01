@@ -1,3 +1,4 @@
 *
 !.gitignore
 !omnidist.yaml
+!upstream-tag
