@@ -14,13 +14,13 @@ The configured description is `Run Codex as an Agent Client Protocol (ACP) agent
 
 Choose an unused version and a reviewed, committed checkout. Create the tag
 locally before release validation; publication occurs only when it is pushed.
-For the migration release:
+For the current release:
 
 ```bash
 go test -race ./...
 go tool golangci-lint run
-git tag -a v1.9.3 -m 'Release codex-acp 1.9.3'
-export OMNIDIST_VERSION="$(./scripts/release-version.sh v1.9.3)"
+git tag -a v1.10.0 -m 'Release codex-acp 1.10.0'
+export OMNIDIST_VERSION="$(./scripts/release-version.sh v1.10.0)"
 npx -y @omnidist/omnidist@latest --profile codex-acp build
 npx -y @omnidist/omnidist@latest --profile codex-acp npm stage
 node scripts/npm-legacy-bin.cjs
@@ -35,7 +35,8 @@ reports its pinned canonical dependency version.
 
 Omnidist supports npm package aliases directly. Its generated aliases expose
 the canonical command; `scripts/npm-legacy-bin.cjs` adds `codex-acp-bridge`
-pointing to the same generated JS launcher, before verify/pack/publish. Preserve
+pointing to the same generated JS launcher and marks the alias deprecated in
+favor of `codex-acp`, before verify/pack/publish. Preserve
 this explicit step when regenerating workflows. Inspect every manifest's name,
 version, description, repository, bin entries, platform constraints, optional
 dependencies and license. Test packed installations of both meta packages and
@@ -84,12 +85,12 @@ Verify GitHub repository identity/permissions and all trusted publisher
 registrations after any fork detachment. Then push the reviewed tag:
 
 ```bash
-git push origin refs/tags/v1.9.3
+git push origin refs/tags/v1.10.0
 ```
 
 This starts npm OIDC publication and the GitHub native-archive release.
 `omnidist-release.yml` also supports manual dispatch with `release_version`
-(e.g. `1.9.3`), checking out its existing `v1.9.3` tag. Use dispatch to resume a
+(e.g. `1.10.0`), checking out its existing `v1.10.0` tag. Use dispatch to resume a
 failed workflow only after inspecting accepted package/version pairs.
 
 Verify published npm manifest metadata and tarball hashes. In clean directories,
@@ -97,7 +98,7 @@ install both npm meta packages and run help/version. Check canonical public Go
 installation without a local workspace or replace directive:
 
 ```bash
-go install github.com/baldaworks/codex-acp/cmd/codex-acp@v1.9.3
+go install github.com/baldaworks/codex-acp/cmd/codex-acp@v1.10.0
 codex-acp version
 ```
 
@@ -112,7 +113,7 @@ The original repository retains module
 
 ```bash
 gh workflow run sync-canonical-release.yml \
-  --repo normahq/codex-acp-bridge -f version=v1.9.3
+  --repo normahq/codex-acp-bridge -f version=v1.10.0
 ```
 
 It requires an existing non-draft, non-prerelease canonical GitHub release,

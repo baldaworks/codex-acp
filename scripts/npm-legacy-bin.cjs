@@ -10,4 +10,5 @@ if (manifest.name !== '@normahq/codex-acp-bridge' || manifest.bin?.['codex-acp']
   throw new Error('Unexpected generated legacy alias manifest');
 }
 manifest.bin['codex-acp-bridge'] = manifest.bin['codex-acp'];
+manifest.deprecated = 'Deprecated: migrate to codex-acp. Install with npm install -g codex-acp or run npx codex-acp. Legacy compatibility remains available.';
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
