@@ -28,6 +28,7 @@ profiles:
           - '@normahq/codex-acp-bridge'
         platform-package: '@baldaworks/codex-acp'
         description: Run Codex as an Agent Client Protocol (ACP) agent.
+        license: MIT
         registry: https://registry.npmjs.org
         repository-url: git+https://github.com/baldaworks/codex-acp
         publish-auth: trusted

@@ -9,6 +9,7 @@ The Omnidist profile stages seven npm packages: `codex-acp`, legacy
 `@normahq/codex-acp-bridge` and five `@baldaworks/codex-acp-*` native packages.
 All share one exact version. Native packages publish before both meta packages.
 The configured description is `Run Codex as an Agent Client Protocol (ACP) agent.`
+All seven packages declare the SPDX license `MIT` and include the license file.
 
 ## Prepare and verify
 
@@ -19,8 +20,8 @@ For the current release:
 ```bash
 go test -race ./...
 go tool golangci-lint run
-git tag -a v1.10.0 -m 'Release codex-acp 1.10.0'
-export OMNIDIST_VERSION="$(./scripts/release-version.sh v1.10.0)"
+git tag -a v1.10.1 -m 'Release codex-acp 1.10.1'
+export OMNIDIST_VERSION="$(./scripts/release-version.sh v1.10.1)"
 npx -y @omnidist/omnidist@latest --profile codex-acp build
 npx -y @omnidist/omnidist@latest --profile codex-acp npm stage
 node scripts/npm-legacy-bin.cjs
@@ -85,12 +86,12 @@ Verify GitHub repository identity/permissions and all trusted publisher
 registrations after any fork detachment. Then push the reviewed tag:
 
 ```bash
-git push origin refs/tags/v1.10.0
+git push origin refs/tags/v1.10.1
 ```
 
 This starts npm OIDC publication and the GitHub native-archive release.
 `omnidist-release.yml` also supports manual dispatch with `release_version`
-(e.g. `1.10.0`), checking out its existing `v1.10.0` tag. Use dispatch to resume a
+(e.g. `1.10.1`), checking out its existing `v1.10.1` tag. Use dispatch to resume a
 failed workflow only after inspecting accepted package/version pairs.
 
 Verify published npm manifest metadata and tarball hashes. In clean directories,
@@ -98,7 +99,7 @@ install both npm meta packages and run help/version. Check canonical public Go
 installation without a local workspace or replace directive:
 
 ```bash
-go install github.com/baldaworks/codex-acp/cmd/codex-acp@v1.10.0
+go install github.com/baldaworks/codex-acp/cmd/codex-acp@v1.10.1
 codex-acp version
 ```
 
@@ -113,7 +114,7 @@ The original repository retains module
 
 ```bash
 gh workflow run sync-canonical-release.yml \
-  --repo normahq/codex-acp-bridge -f version=v1.10.0
+  --repo normahq/codex-acp-bridge -f version=v1.10.1
 ```
 
 It requires an existing non-draft, non-prerelease canonical GitHub release,
