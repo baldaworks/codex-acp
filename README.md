@@ -1,21 +1,23 @@
-# codex-acp-bridge
+# codex-acp
 
-[![test](https://github.com/normahq/codex-acp-bridge/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/normahq/codex-acp-bridge/actions/workflows/test.yml)
-[![lint](https://github.com/normahq/codex-acp-bridge/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/normahq/codex-acp-bridge/actions/workflows/lint.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/normahq/codex-acp-bridge)](https://goreportcard.com/report/github.com/normahq/codex-acp-bridge)
-[![coverage](https://codecov.io/gh/normahq/codex-acp-bridge/branch/main/graph/badge.svg)](https://codecov.io/gh/normahq/codex-acp-bridge)
-[![npm version](https://img.shields.io/npm/v/%40normahq%2Fcodex-acp-bridge)](https://www.npmjs.com/package/@normahq/codex-acp-bridge)
+[![test](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml)
+[![lint](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/baldaworks/codex-acp)](https://goreportcard.com/report/github.com/baldaworks/codex-acp)
+[![coverage](https://codecov.io/gh/baldaworks/codex-acp/branch/main/graph/badge.svg)](https://codecov.io/gh/baldaworks/codex-acp)
+[![npm version](https://img.shields.io/npm/v/codex-acp)](https://www.npmjs.com/package/codex-acp)
 
 Run Codex as an ACP agent.
 
-`codex-acp-bridge` starts the local `codex app-server` backend and exposes it to Agent Client Protocol (ACP) clients over stdio. Use it when an ACP runner needs to talk to Codex through a stable command while keeping Codex authentication, session state, model selection, and tool behavior native to the Codex CLI.
+Fork of [normahq/codex-acp-bridge](https://github.com/normahq/codex-acp-bridge), preserving upstream release versions and the original MIT license.
+
+`codex-acp` starts the local `codex app-server` backend and exposes it to Agent Client Protocol (ACP) clients over stdio. Use it when an ACP runner needs to talk to Codex through a stable command while keeping Codex authentication, session state, model selection, and tool behavior native to the Codex CLI.
 
 It is not an OpenAI API proxy. It uses the authenticated Codex session on the machine where the bridge runs, so no OpenAI API key is required.
 
 ## Requirements
 
 - `codex` CLI installed and available in `PATH`.
-- Authenticated Codex session on the host running the bridge. Run `codex-acp-bridge login` or `codex login` to authenticate.
+- Authenticated Codex session on the host running the bridge. Run `codex-acp login` or `codex login` to authenticate.
 - Active Codex subscription.
 
 ## Quickstart
@@ -23,19 +25,19 @@ It is not an OpenAI API proxy. It uses the authenticated Codex session on the ma
 Run the bridge with `npx`:
 
 ```bash
-npx -y @normahq/codex-acp-bridge@latest
+npx -y codex-acp@latest
 ```
 
 Inspect the ACP handshake:
 
 ```bash
-npx -y @baldaworks/acpdump -- npx -y @normahq/codex-acp-bridge@latest
+npx -y @baldaworks/acpdump -- npx -y codex-acp@latest
 ```
 
 Start an interactive ACP session:
 
 ```bash
-npx -y @baldaworks/acpchat -- npx -y @normahq/codex-acp-bridge@latest
+npx -y @baldaworks/acpchat -- npx -y codex-acp@latest
 ```
 
 ## Installation
@@ -43,27 +45,26 @@ npx -y @baldaworks/acpchat -- npx -y @normahq/codex-acp-bridge@latest
 Install globally if your ACP client expects a stable executable name:
 
 ```bash
-npm install -g @normahq/codex-acp-bridge@latest
+npm install -g codex-acp@latest
 ```
 
 Then run:
 
 ```bash
-codex-acp-bridge
+codex-acp
 ```
 
-## Zed ACP Registry
+## ACP client configuration
 
-Install **Codex ACP Bridge** from Zed's ACP Registry:
+Configure your ACP client to launch:
 
-1. Run `zed: acp registry` from the Zed command palette.
-2. Search for **Codex ACP Bridge** and install it.
-3. Start a Codex ACP Bridge thread from the Agent Panel or Threads Sidebar.
-4. If Zed prompts for authentication, choose **Log in to Codex**. The bridge runs the native `codex login` terminal flow; Codex owns the browser/device interaction and credential storage.
+```bash
+codex-acp --defer-backend
+```
 
-You can also open `agent: open settings`, go to **External Agents**, select **Add Agent**, and choose **Install from Registry**. See [Zed's External Agents documentation](https://zed.dev/docs/ai/external-agents) for the current UI flow.
-
-The registry launch uses `--defer-backend` so Zed can complete ACP discovery and offer the native login method before starting `codex app-server`. Codex is still required for sessions: the first backend-dependent request reports a normal ACP error if `codex` is unavailable or cannot start.
+`--defer-backend` allows ACP discovery and native Codex login before starting
+`codex app-server`. Codex remains required for sessions. Use manual client
+configuration for this fork; its npm package and executable are `codex-acp`.
 
 ## What The Bridge Provides
 
@@ -80,17 +81,17 @@ The registry launch uses `--defer-backend` so Zed can complete ACP discovery and
 - Raw terminal provider/app-server failure details preserved in `session/prompt._meta.error`.
 - Strict `session/new._meta.codex` validation for Codex-specific startup options.
 
-For protocol-level details, see [docs/usage.md](https://github.com/normahq/codex-acp-bridge/blob/main/docs/usage.md) and [docs/json-api.md](https://github.com/normahq/codex-acp-bridge/blob/main/docs/json-api.md).
+For protocol-level details, see [docs/usage.md](https://github.com/baldaworks/codex-acp/blob/main/docs/usage.md) and [docs/json-api.md](https://github.com/baldaworks/codex-acp/blob/main/docs/json-api.md).
 
 ## Runtime Options
 
 ```bash
-codex-acp-bridge [flags]
+codex-acp [flags]
 ```
 
 Common flags:
 
-- `--name`: ACP agent name reported in `initialize.agentInfo.name`. Default: `norma-codex-acp-bridge`.
+- `--name`: ACP agent name reported in `initialize.agentInfo.name`. Default: `codex-acp`.
 - `--defer-backend`: allow ACP initialization before validating `codex app-server`; backend-dependent requests still start Codex and return an error if it is unavailable. Default: `false`.
 - `--message-streaming`: stream Codex `agentMessage` deltas as ACP `agent_message_chunk` updates. Default: `false`.
 - `--reasoning-streaming`: stream Codex reasoning text deltas live; when disabled, raw/content token deltas stay off, while summary thoughts still publish incrementally on completed summary parts. Default: `true`.
@@ -106,15 +107,15 @@ Ordinary MCP `form` and `url` elicitations are forwarded as ACP elicitations onl
 Examples:
 
 ```bash
-codex-acp-bridge --name team-codex
-codex-acp-bridge --defer-backend
-codex-acp-bridge --message-streaming
-codex-acp-bridge --reasoning-thoughts=both
-codex-acp-bridge --reasoning-summary=detailed
-codex-acp-bridge --reasoning-streaming=false
-codex-acp-bridge --mcp-approval-policy=allow
-codex-acp-bridge --sandbox=workspace-write
-codex-acp-bridge --debug
+codex-acp --name team-codex
+codex-acp --defer-backend
+codex-acp --message-streaming
+codex-acp --reasoning-thoughts=both
+codex-acp --reasoning-summary=detailed
+codex-acp --reasoning-streaming=false
+codex-acp --mcp-approval-policy=allow
+codex-acp --sandbox=workspace-write
+codex-acp --debug
 ```
 
 ## Codex Session Metadata
@@ -140,9 +141,24 @@ Unknown keys are rejected with ACP `invalid_params`. ACP session IDs are generat
 
 Use ACP `session/set_config_option` with config ID `model` for model changes instead of bridge-specific model flags; the model ID must be one advertised by Codex `model/list`. Legacy `session/set_model` remains supported for older clients. Use ACP `mcpServers` for per-session MCP servers; supported transports are `stdio` and `http`, while `sse` is rejected.
 
+## Distribution and releases
+
+The npm package `codex-acp` selects one native binary package:
+
+- `@baldaworks/codex-acp-darwin-x64`
+- `@baldaworks/codex-acp-darwin-arm64`
+- `@baldaworks/codex-acp-linux-x64`
+- `@baldaworks/codex-acp-linux-arm64`
+- `@baldaworks/codex-acp-win32-x64`
+
+All packages use the corresponding upstream version; the initial fork baseline
+is upstream `v1.9.2`. The fork does not start a separate version sequence.
+Maintainer instructions for the initial npm publication with browser 2FA and
+subsequent trusted publishing are in [docs/releasing.md](docs/releasing.md).
+
 ## Links
 
-- Repository: https://github.com/normahq/codex-acp-bridge
-- Issues: https://github.com/normahq/codex-acp-bridge/issues
-- Releases: https://github.com/normahq/codex-acp-bridge/releases
-- npm package: https://www.npmjs.com/package/@normahq/codex-acp-bridge
+- Repository: https://github.com/baldaworks/codex-acp
+- Issues: https://github.com/baldaworks/codex-acp/issues
+- Releases: https://github.com/baldaworks/codex-acp/releases
+- npm package: https://www.npmjs.com/package/codex-acp

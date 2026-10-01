@@ -1,4 +1,4 @@
-# codex-acp-bridge — AGENTS.md
+# codex-acp — AGENTS.md
 
 ## Development Standards
 
@@ -40,8 +40,10 @@ go tool golangci-lint run
 ## Release
 
 - Omnidist profile is authoritative (`.omnidist/omnidist.yaml`).
-- Version source is Git tags (`version.source: git-tag`).
-- Publish flow is tag-driven via GitHub Actions release workflow.
+- Preserve upstream versions and original `v*` tags. `scripts/release-version.sh` validates the canonical upstream tag and ancestry before producing `OMNIDIST_VERSION` (`version.source: env`).
+- Initial npm publication uses the npm CLI with web 2FA. Configure trusted publishing for all six packages afterward.
+- Subsequent npm publication uses `.github/workflows/omnidist-release.yml` and OIDC; fork release tags are `codex-acp/vX.Y.Z`, or dispatch the workflow with the corresponding upstream tag.
+- See `docs/releasing.md`; do not invent a version or move an upstream tag to release the fork.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
@@ -74,7 +76,7 @@ bd close <id>         # Complete work
 3. **Update issue status** - Close finished work, update in-progress items
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
-   git pull --rebase
+   git pull --no-rebase
    bd dolt push
    git push
    git status  # MUST show "up to date with origin"

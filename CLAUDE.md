@@ -33,7 +33,7 @@ bd close <id>         # Complete work
 3. **Update issue status** - Close finished work, update in-progress items
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
-   git pull --rebase
+   git pull --no-rebase
    bd dolt push
    git push
    git status  # MUST show "up to date with origin"
@@ -52,18 +52,19 @@ bd close <id>         # Complete work
 
 ## Build & Test
 
-_Add your build and test commands here_
-
 ```bash
-# Example:
-# npm install
-# npm test
+go test -race ./...
+go tool golangci-lint run
+go build ./cmd/codex-acp
 ```
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+`cmd/codex-acp` exposes the Cobra command in `pkg/cobracmd`. The bridge in
+`internal/apps/codexacpbridge` runs Codex app-server and maps its events to ACP.
+Use `AGENTS.md` for guardrails and `docs/releasing.md` for npm publication.
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+Use idiomatic Go, Conventional Commits and Beads. Preserve the upstream ACP
+contract, MIT attribution, release versions and original tags.

@@ -5,31 +5,31 @@ This command runs the Codex bridge backend and exposes it as an ACP agent over s
 Command:
 
 ```bash
-npx -y @normahq/codex-acp-bridge@latest
+npx -y codex-acp@latest
 # or when installed globally:
-codex-acp-bridge
+codex-acp
 ```
 
 ## Why this exists
 
 - ACP runners need a stable ACP endpoint.
-- `codex-acp-bridge` provides a stable command name for Codex ACP integration.
+- `codex-acp` provides a stable command name for Codex ACP integration.
 - The bridge uses Codex app-server backend runtime semantics.
 
 ## Usage
 
 ```bash
 # Start bridge with defaults
-codex-acp-bridge
+codex-acp
 
 # Set ACP agent name seen by ACP clients in initialize.agentInfo.name
-codex-acp-bridge --name team-codex
+codex-acp --name team-codex
 
 # Stream app-server agent messages live
-codex-acp-bridge --message-streaming
+codex-acp --message-streaming
 
 # Disable live reasoning token streaming; completed summary parts still emit incremental thoughts
-codex-acp-bridge --reasoning-streaming=false
+codex-acp --reasoning-streaming=false
 ```
 
 ## ACP Tooling Examples
@@ -37,28 +37,28 @@ codex-acp-bridge --reasoning-streaming=false
 Use `acpdump` to inspect ACP initialize/session behavior:
 
 ```bash
-npx -y @baldaworks/acpdump -- npx -y @normahq/codex-acp-bridge@latest
-npx -y @baldaworks/acpdump --json -- npx -y @normahq/codex-acp-bridge@latest
+npx -y @baldaworks/acpdump -- npx -y codex-acp@latest
+npx -y @baldaworks/acpdump --json -- npx -y codex-acp@latest
 ```
 
 Use `acpchat` for an interactive ACP prompt session:
 
 ```bash
-npx -y @baldaworks/acpchat -- npx -y @normahq/codex-acp-bridge@latest
+npx -y @baldaworks/acpchat -- npx -y codex-acp@latest
 ```
 
 If tools are installed globally:
 
 ```bash
-acpdump -- codex-acp-bridge
-acpchat -- codex-acp-bridge
+acpdump -- codex-acp
+acpchat -- codex-acp
 ```
 
 ## Flags
 
 - `--name`:
   ACP agent name reported in `initialize.agentInfo.name`.
-  Default: `norma-codex-acp-bridge`.
+  Default: `codex-acp`.
 - `--message-streaming`:
   Stream app-server `item/agentMessage/delta` notifications as ACP `agent_message_chunk` updates.
   Default: `false`.

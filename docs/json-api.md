@@ -2,11 +2,11 @@
 
 Status: draft  
 Date: 2026-04-24  
-Audience: `codex-acp-bridge` adapter maintainers
+Audience: `codex-acp` adapter maintainers
 
 ## Source of truth
 
-This document is code-first for codex-acp-bridge behavior:
+This document is code-first for codex-acp behavior:
 - backend schema shape comes from `codex app-server` JSON schema output.
 - app-server protocol behavior is documented at https://developers.openai.com/codex/app-server.
 - adapter projection semantics come from `internal/apps/codexacpbridge` implementation and tests.

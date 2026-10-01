@@ -1,4 +1,4 @@
-# codex-acp-bridge command
+# codex-acp command
 
 The canonical bridge documentation now lives at the repository root:
 
