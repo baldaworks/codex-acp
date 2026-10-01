@@ -1,6 +1,7 @@
 # codex-acp
 
 [![npm version](https://img.shields.io/npm/v/codex-acp)](https://www.npmjs.com/package/codex-acp)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![test](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml)
 [![lint](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml)
 [![security](https://github.com/baldaworks/codex-acp/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/security.yml)
