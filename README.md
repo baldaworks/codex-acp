@@ -31,27 +31,32 @@ reasoning effort from your client's session controls.
 ## Get started
 
 You need the Codex CLI on `PATH`, a Codex account with access, and an
-ACP-compatible client. Install and sign in:
+ACP-compatible client. Install:
 
 ```bash
 npm install -g codex-acp@latest
+```
+
+If you haven't already signed in to Codex:
+
+```bash
 codex-acp login
 ```
 
 Configure your ACP client to launch this command:
 
 ```bash
-codex-acp --defer-backend
+codex-acp
 ```
 
 If your client has separate command and arguments fields, set **command** to
-`codex-acp` and **arguments** to `["--defer-backend"]`. The client starts the
+`codex-acp` and leave **arguments** empty. The client starts the
 agent and provides the chat interface.
 
 Prefer to skip the global install? Configure the client to launch:
 
 ```bash
-npx -y codex-acp@latest --defer-backend
+npx -y codex-acp@latest
 ```
 
 Prefer the standalone binary? Download an archive from

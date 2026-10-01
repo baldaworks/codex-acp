@@ -30,14 +30,20 @@ for Go API adapters, version synchronization and preserved historical releases.
 
 ## ACP client setup and authentication
 
-Install globally with `npm install -g codex-acp@latest`, then run `codex-acp login`
-to delegate authentication to native `codex login`. An authenticated Codex session
+Install globally with `npm install -g codex-acp@latest`. If you haven't already
+signed in, run `codex-acp login` to delegate authentication to native `codex login`.
+An authenticated Codex session
 with account access is required on the machine running the agent.
 
-Configure the client command as `codex-acp` and arguments as `["--defer-backend"]`.
-This permits ACP discovery and terminal login before starting the backend. The
-client launches the command over stdio; running it alone does not open a chat UI.
-Codex CLI remains required for backend-dependent operations.
+Configure the client command as `codex-acp` with no extra arguments. The backend
+is initialized and validated at startup. The client launches the command over
+stdio; running it alone does not open a chat UI.
+
+### Advanced: discovery before backend startup
+
+Use `codex-acp --defer-backend` only when a client needs ACP discovery or terminal
+login before the backend is available. This delays backend validation until a
+session operation. Codex CLI remains required for backend-dependent operations.
 
 For a pinned Go install, use `@v1.9.3` instead of `@latest`, and place `GOBIN`
 (or `$(go env GOPATH)/bin`) on `PATH`. See [Go embedding](development.md).
