@@ -1,7 +1,59 @@
+# IDE/editor settings
+.idea/
+.vscode/
+*.code-workspace
 
-# Beads / Dolt files (added by bd init)
+# Build artifacts
+/bin/
+/build/
+/dist/
+/tmp/
+/out/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+cmd/norma/norma
+/norma
+
+# Coverage / profiling output
+coverage/
+coverage.*
+*.coverprofile
+*.cov
+*.prof
+
+# Tool caches
+.cache/
+
+# Norma runtime data
+.norma/norma.db*
+.norma/runs/*
+!.norma/runs/*/workspace/
+.norma/locks/
+.norma/**/*.log
+.norma/**/*.tmp
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+.env
+.codex
+
+# Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Beads runtime logs
+.beads/*.log
+
+# Beads / Dolt files (added by bd init)
 .beads-credential-key
-.beads/proxieddb/
-*.gate.lock*
+
+# Fork executable and Beads workspace lock
+/codex-acp
+.beads.gate.lock

@@ -1,0 +1,78 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME}"
+          if [[ -z "${version}" ]]; then
+            echo "GITHUB_REF_NAME is required"
+            exit 1
+          fi
+
+          binary="codex-acp-bridge"
+          main_pkg="./cmd/codex-acp-bridge"
+          mkdir -p dist
+
+          targets=(
+            "darwin amd64"
+            "darwin arm64"
+            "linux amd64"
+            "linux arm64"
+            "windows amd64"
+          )
+
+          for target in "${targets[@]}"; do
+            read -r goos goarch <<<"${target}"
+            artifact="${binary}-${version}-${goos}-${goarch}"
+            workdir="dist/${artifact}"
+            mkdir -p "${workdir}"
+
+            out_name="${binary}"
+            if [[ "${goos}" == "windows" ]]; then
+              out_name="${out_name}.exe"
+            fi
+
+            GOOS="${goos}" GOARCH="${goarch}" CGO_ENABLED=0 \
+              go build -trimpath -ldflags="-s -w" -o "${workdir}/${out_name}" "${main_pkg}"
+            cp README.md LICENSE "${workdir}/"
+
+            tar -C dist -czf "dist/${artifact}.tar.gz" "${artifact}"
+            rm -rf "${workdir}"
+          done
+
+          (
+            cd dist
+            sha256sum ./*.tar.gz > checksums.txt
+          )
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/checksums.txt
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,40 @@
+profiles:
+  codex-acp-bridge:
+    tool:
+      name: codex-acp-bridge
+      main: ./cmd/codex-acp-bridge
+    readme-path: ./README.md
+    version:
+      source: git-tag
+    targets:
+      - os: darwin
+        arch: amd64
+      - os: darwin
+        arch: arm64
+      - os: linux
+        arch: amd64
+      - os: linux
+        arch: arm64
+      - os: windows
+        arch: amd64
+    build:
+      ldflags: -s -w -X github.com/normahq/codex-acp-bridge/internal/version.buildVersion=${OMNIDIST_VERSION}
+      tags: []
+      cgo: false
+    distributions:
+      npm:
+        package: '@normahq/codex-acp-bridge'
+        registry: https://registry.npmjs.org
+        repository-url: https://github.com/normahq/codex-acp-bridge
+        publish-auth: trusted
+        access: public
+        include-readme: true
+        keywords:
+          - ai
+          - llm
+          - codex
+          - acp
+          - mcp
+          - agent
+          - bridge
+          - cli
