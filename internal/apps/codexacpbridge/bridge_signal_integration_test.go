@@ -241,7 +241,7 @@ func TestBridgeIntegrationPromptRecreatesBackendAfterPrePromptBackendExit(t *tes
 	}
 }
 
-func newFakeCodexHelperHarness(t *testing.T) *fakeCodexHelperHarness {
+func newFakeCodexHelperHarness(t testing.TB) *fakeCodexHelperHarness {
 	t.Helper()
 
 	stateDir := t.TempDir()
@@ -292,7 +292,7 @@ func (h *fakeCodexHelperHarness) eventsSince(t *testing.T, start int) []fakeCode
 }
 
 func newHelperBackedACPClient(
-	t *testing.T,
+	t testing.TB,
 	workingDir string,
 	binPath string,
 	harness *fakeCodexHelperHarness,
@@ -324,7 +324,7 @@ func newHelperBackedACPClient(
 	return client, &stderr
 }
 
-func installFakeCodexScript(t *testing.T) string {
+func installFakeCodexScript(t testing.TB) string {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -336,7 +336,7 @@ func installFakeCodexScript(t *testing.T) string {
 	return dir
 }
 
-func helperMustInitialize(t *testing.T, client *integrationACPClient, stderr *lockedBuffer) acp.InitializeResponse {
+func helperMustInitialize(t testing.TB, client *integrationACPClient, stderr *lockedBuffer) acp.InitializeResponse {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), helperIntegrationTestTimeout)
@@ -353,7 +353,7 @@ func helperMustInitialize(t *testing.T, client *integrationACPClient, stderr *lo
 }
 
 func helperMustNewSession(
-	t *testing.T,
+	t testing.TB,
 	client *integrationACPClient,
 	stderr *lockedBuffer,
 	cwd string,
@@ -468,7 +468,7 @@ func assertNoClosedPipeNoise(t *testing.T, err error, stderr string) {
 	}
 }
 
-func integrationWorkingDir(t *testing.T) string {
+func integrationWorkingDir(t testing.TB) string {
 	t.Helper()
 
 	dir, err := os.Getwd()
@@ -489,7 +489,7 @@ func integrationWorkingDir(t *testing.T) string {
 	}
 }
 
-func buildIntegrationBridgeBinary(t *testing.T, workingDir string) string {
+func buildIntegrationBridgeBinary(t testing.TB, workingDir string) string {
 	t.Helper()
 
 	binPath := filepath.Join(t.TempDir(), "codex-acp")
@@ -515,7 +515,7 @@ func TestIntegrationFakeCodexHelperProcess(t *testing.T) {
 
 	args := os.Args
 	if len(args) < 2 || args[len(args)-1] == "--help" {
-		fmt.Fprintln(os.Stdout, "usage: codex app-server")
+		_, _ = fmt.Fprintln(os.Stdout, "usage: codex app-server")
 		os.Exit(0)
 	}
 
@@ -692,18 +692,18 @@ func nextFakeCodexHelperInstance(stateDir string) (int, error) {
 }
 
 func writeFakeCodexHelperEvent(stateDir string, event fakeCodexHelperEvent) {
+	raw, err := json.Marshal(event)
+	if err != nil {
+		os.Exit(5)
+	}
 	path := filepath.Join(stateDir, "events.jsonl")
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		os.Exit(4)
 	}
-	defer f.Close()
-
-	raw, err := json.Marshal(event)
-	if err != nil {
-		os.Exit(5)
-	}
-	if _, err := f.Write(append(raw, '\n')); err != nil {
+	_, writeErr := f.Write(append(raw, '\n'))
+	closeErr := f.Close()
+	if writeErr != nil || closeErr != nil {
 		os.Exit(6)
 	}
 }
