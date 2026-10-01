@@ -1,11 +1,11 @@
 profiles:
-  codex-acp-bridge:
+  codex-acp:
     tool:
-      name: codex-acp-bridge
-      main: ./cmd/codex-acp-bridge
+      name: codex-acp
+      main: ./cmd/codex-acp
     readme-path: ./README.md
     version:
-      source: git-tag
+      source: env
     targets:
       - os: darwin
         arch: amd64
@@ -18,14 +18,16 @@ profiles:
       - os: windows
         arch: amd64
     build:
-      ldflags: -s -w -X github.com/normahq/codex-acp-bridge/internal/version.buildVersion=${OMNIDIST_VERSION}
+      ldflags: -s -w -X github.com/baldaworks/codex-acp/internal/version.buildVersion=${OMNIDIST_VERSION}
       tags: []
       cgo: false
     distributions:
       npm:
-        package: '@normahq/codex-acp-bridge'
+        package: codex-acp
+        platform-package: '@baldaworks/codex-acp'
+        description: Run Codex as an Agent Client Protocol (ACP) agent.
         registry: https://registry.npmjs.org
-        repository-url: https://github.com/normahq/codex-acp-bridge
+        repository-url: git+https://github.com/baldaworks/codex-acp
         publish-auth: trusted
         access: public
         include-readme: true

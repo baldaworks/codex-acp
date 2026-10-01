@@ -1,0 +1,101 @@
+# Generated with Omnidist 0.1.40, then customized for upstream versions and OIDC.
+# Preserve the dispatch, version validation, checks and fork tag namespace on regeneration.
+name: omnidist-release
+on:
+  push:
+    tags:
+      - "codex-acp/v*"
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: Upstream version tag to publish from the current fork
+        required: true
+        default: v1.9.2
+        type: string
+
+concurrency:
+  group: codex-acp-release
+  cancel-in-progress: false
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+jobs:
+  prepare:
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Resolve upstream version
+        id: version
+        env:
+          RELEASE_REF: ${{ inputs.upstream_tag || github.ref_name }}
+        run: |
+          version=$(./scripts/release-version.sh "$RELEASE_REF")
+          echo "OMNIDIST_VERSION=$version" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - name: Install omnidist
+        run: npm install -g 'npm@11.16.0' '@omnidist/omnidist@0.1.40'
+      - name: Test
+        run: go test -race ./...
+      - name: Lint
+        run: go tool golangci-lint run
+      - name: Build artifacts
+        run: omnidist --profile 'codex-acp' build
+      - name: Stage artifacts
+        run: omnidist --profile 'codex-acp' stage --only 'npm'
+      - name: Verify artifacts
+        run: omnidist --profile 'codex-acp' verify --only 'npm'
+      - name: Pack staged artifacts
+        run: tar -czf omnidist-staged.tgz .omnidist/codex-acp
+      - name: Upload staged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnidist-staged
+          path: omnidist-staged.tgz
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: .omnidist/codex-acp/dist/**/*
+          if-no-files-found: error
+
+  publish_npm:
+    needs: prepare
+    env:
+      OMNIDIST_VERSION: ${{ needs.prepare.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - name: Install omnidist
+        run: npm install -g 'npm@11.16.0' '@omnidist/omnidist@0.1.40'
+      - name: Download staged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: omnidist-staged
+      - name: Restore staged artifacts
+        run: tar -xzf omnidist-staged.tgz
+      - name: Verify artifacts
+        run: omnidist --profile 'codex-acp' npm verify
+      - name: Publish npm artifacts
+        run: omnidist --profile 'codex-acp' npm publish
