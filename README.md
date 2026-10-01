@@ -8,7 +8,8 @@
 
 Run Codex as an ACP agent.
 
-Fork of [normahq/codex-acp-bridge](https://github.com/normahq/codex-acp-bridge), preserving upstream release versions and the original MIT license.
+The canonical repository and Go module are `github.com/baldaworks/codex-acp`.
+The project originated in [normahq/codex-acp-bridge](https://github.com/normahq/codex-acp-bridge), which retains historical releases and Go compatibility adapters. The original MIT license is preserved.
 
 `codex-acp` starts the local `codex app-server` backend and exposes it to Agent Client Protocol (ACP) clients over stdio. Use it when an ACP runner needs to talk to Codex through a stable command while keeping Codex authentication, session state, model selection, and tool behavior native to the Codex CLI.
 
@@ -54,6 +55,19 @@ Then run:
 codex-acp
 ```
 
+Install from Go source:
+
+```bash
+go install github.com/baldaworks/codex-acp/cmd/codex-acp@latest
+```
+
+To pin a release, replace `@latest` with `@v1.9.3`. Put your Go binary directory
+(`GOBIN`, or `$(go env GOPATH)/bin` by default) on `PATH`.
+
+Embed the command in a Go application using
+`github.com/baldaworks/codex-acp/pkg/cobracmd`; `New()` and `Command()` return
+a `*cobra.Command`.
+
 ## ACP client configuration
 
 Configure your ACP client to launch:
@@ -64,7 +78,7 @@ codex-acp --defer-backend
 
 `--defer-backend` allows ACP discovery and native Codex login before starting
 `codex app-server`. Codex remains required for sessions. Use manual client
-configuration for this fork; its npm package and executable are `codex-acp`.
+configuration; its npm package and executable are `codex-acp`.
 
 ## What The Bridge Provides
 
@@ -154,11 +168,24 @@ The npm package `codex-acp` selects one native binary package:
 The legacy package `@normahq/codex-acp-bridge` shares the same native packages
 and provides both `codex-acp` and the legacy `codex-acp-bridge` command.
 
-All seven packages use the same release version. The initial release was
-`1.9.2`, matching upstream `v1.9.2`; fork patch `1.9.3` adds the legacy alias
-on that baseline. Original upstream tags remain unchanged.
-Maintainer instructions for the initial npm publication with browser 2FA and
-subsequent trusted publishing are in [docs/releasing.md](docs/releasing.md).
+All seven npm packages share one version. Release `1.9.3` introduces the complete
+Go and npm migration. Canonical root Go module releases use standard `vX.Y.Z`
+tags. Historical tags and published artifacts remain unchanged.
+Maintainer instructions are in [docs/releasing.md](docs/releasing.md).
+
+Existing installations can retain their old entrypoints:
+
+```bash
+npx -y @normahq/codex-acp-bridge@latest
+npm install -g @normahq/codex-acp-bridge@latest
+go install github.com/normahq/codex-acp-bridge/cmd/codex-acp-bridge@latest
+```
+
+The legacy npm package provides `codex-acp` and `codex-acp-bridge`, both using
+one launcher. The legacy Go module preserves `pkg/cobracmd` imports and
+forwards to a pinned canonical release; no consumer `replace` directive is
+needed. Its hourly/manual synchronization can lag a new canonical release.
+See [docs/migration.md](docs/migration.md) for compatibility and update policy.
 
 ## Links
 

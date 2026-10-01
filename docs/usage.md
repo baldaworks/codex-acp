@@ -10,6 +10,24 @@ npx -y codex-acp@latest
 codex-acp
 ```
 
+Install with Go if preferred:
+
+```bash
+go install github.com/baldaworks/codex-acp/cmd/codex-acp@latest
+```
+
+Legacy entrypoints remain available:
+
+```bash
+npx -y @normahq/codex-acp-bridge@latest
+go install github.com/normahq/codex-acp-bridge/cmd/codex-acp-bridge@latest
+codex-acp-bridge --defer-backend
+```
+
+Both entrypoints use the canonical implementation and flags. Protocol metadata
+keeps its historical `codex-acp-bridge/*` names. See [migration](migration.md)
+for Go API adapters, version synchronization and preserved historical releases.
+
 ## Why this exists
 
 - ACP runners need a stable ACP endpoint.

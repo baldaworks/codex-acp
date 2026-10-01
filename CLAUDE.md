@@ -62,9 +62,12 @@ go build ./cmd/codex-acp
 
 `cmd/codex-acp` exposes the Cobra command in `pkg/cobracmd`. The bridge in
 `internal/apps/codexacpbridge` runs Codex app-server and maps its events to ACP.
-Use `AGENTS.md` for guardrails and `docs/releasing.md` for npm publication.
+Use `AGENTS.md` for guardrails, `docs/releasing.md` for Go/npm/GitHub releases,
+and `docs/migration.md` for the legacy Go adapters and shared npm binaries.
 
 ## Conventions & Patterns
 
-Use idiomatic Go, Conventional Commits and Beads. Preserve the upstream ACP
-contract, MIT attribution, release versions and original tags.
+Use idiomatic Go, Conventional Commits and Beads. Preserve the ACP contract, historical wire keys, MIT attribution and published
+tags/artifacts. The canonical module uses normal `vX.Y.Z` tags. Update the
+legacy adapters and documentation through the migration/release workflow;
+legacy compatibility must continue without a consumer Go `replace` directive.

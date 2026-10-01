@@ -1,8 +1,15 @@
 # JSON API Specification
 
-Status: draft  
-Date: 2026-04-24  
+Status: draft
+Schema snapshot: 2026-04-24
+Migration documentation: 2026-10-01
 Audience: `codex-acp` adapter maintainers
+
+The same ACP projection serves canonical and legacy command entrypoints.
+The historical `codex-acp-bridge/*` wire metadata keys and deterministic
+reasoning identifiers are preserved across the repository/module migration.
+Go callers use `github.com/baldaworks/codex-acp/pkg/cobracmd`; legacy imports
+forward to the same implementation. See [migration.md](migration.md).
 
 ## Source of truth
 

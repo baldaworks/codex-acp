@@ -1,7 +1,16 @@
 # codex-acp command
 
-The canonical bridge documentation now lives at the repository root:
+Install the canonical Go executable:
 
-- [../../README.md](../../README.md)
+```bash
+go install github.com/baldaworks/codex-acp/cmd/codex-acp@latest
+codex-acp version
+codex-acp --defer-backend
+```
 
-This command path is kept only as a lightweight reference for existing links.
+Use `@v1.9.3` for a pinned migration release. The command delegates to the
+public `github.com/baldaworks/codex-acp/pkg/cobracmd` package and preserves
+stdio, context cancellation and nonzero failure exit status.
+
+See [installation and options](../../README.md), [usage](../../docs/usage.md),
+[legacy compatibility](../../docs/migration.md) and [releases](../../docs/releasing.md).

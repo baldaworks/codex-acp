@@ -1,21 +1,16 @@
-# Generated with Omnidist 0.1.40, then customized for upstream versions and OIDC.
-# Preserve dispatch, baseline validation, legacy-bin staging and fork tag namespace on regeneration.
+# Generated with Omnidist 0.1.40, then customized for Go releases and npm OIDC.
+# Preserve dispatch, exact Go tag validation and legacy-bin staging on regeneration.
 name: omnidist-release
 on:
   push:
     tags:
-      - "codex-acp/v*"
+      - "v*"
   workflow_dispatch:
     inputs:
       release_version:
         description: Fork release version
         required: true
         default: '1.9.3'
-        type: string
-      upstream_tag:
-        description: Canonical upstream baseline included in the fork
-        required: true
-        default: v1.9.2
         type: string
 
 concurrency:
@@ -34,13 +29,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Resolve release version and verify upstream baseline
+          ref: ${{ inputs.release_version && format('v{0}', inputs.release_version) || github.ref }}
+      - name: Resolve exact Go release version
         id: version
         env:
-          RELEASE_REF: ${{ inputs.release_version && format('codex-acp/v{0}', inputs.release_version) || github.ref_name }}
-          UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+          RELEASE_REF: ${{ inputs.release_version && format('v{0}', inputs.release_version) || github.ref_name }}
         run: |
-          version=$(./scripts/release-version.sh "$RELEASE_REF" "$UPSTREAM_TAG")
+          version=$(./scripts/release-version.sh "$RELEASE_REF")
           echo "OMNIDIST_VERSION=$version" >> "$GITHUB_ENV"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-go@v6
@@ -89,6 +84,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.release_version && format('v{0}', inputs.release_version) || github.ref }}
 
       - uses: actions/setup-node@v6
         with:
