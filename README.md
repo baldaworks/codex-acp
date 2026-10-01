@@ -1,195 +1,101 @@
 # codex-acp
 
+[![npm version](https://img.shields.io/npm/v/codex-acp)](https://www.npmjs.com/package/codex-acp)
 [![test](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/test.yml)
 [![lint](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/lint.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/baldaworks/codex-acp)](https://goreportcard.com/report/github.com/baldaworks/codex-acp)
-[![coverage](https://codecov.io/gh/baldaworks/codex-acp/branch/main/graph/badge.svg)](https://codecov.io/gh/baldaworks/codex-acp)
-[![npm version](https://img.shields.io/npm/v/codex-acp)](https://www.npmjs.com/package/codex-acp)
+[![security](https://github.com/baldaworks/codex-acp/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/baldaworks/codex-acp/actions/workflows/security.yml)
 
-Run Codex as an ACP agent.
+**Bring Codex to your ACP-compatible editor or client.**
 
-The canonical repository and Go module are `github.com/baldaworks/codex-acp`.
-The project originated in [normahq/codex-acp-bridge](https://github.com/normahq/codex-acp-bridge), which retains historical releases and Go compatibility adapters. The original MIT license is preserved.
+Use your existing Codex login to chat, work with files, and connect tools through
+[Agent Client Protocol](https://agentclientprotocol.com/). Choose your model and
+reasoning effort from your client's session controls.
 
-`codex-acp` starts the local `codex app-server` backend and exposes it to Agent Client Protocol (ACP) clients over stdio. Use it when an ACP runner needs to talk to Codex through a stable command while keeping Codex authentication, session state, model selection, and tool behavior native to the Codex CLI.
+## Features
 
-It is not an OpenAI API proxy. It uses the authenticated Codex session on the machine where the bridge runs, so no OpenAI API key is required.
+- **Single Go binary.** About **4 MiB**: published v1.9.3 binaries are
+  3.8–4.2 MiB across platforms (3.9 MiB on Linux x64). The standalone binary
+  needs no Node.js, Python, or shared-library runtime; Codex CLI is required.
+- **Your Codex account.** Sign in with the native Codex login flow.
+- **Models and reasoning controls.** Select available models and supported
+  reasoning effort levels without restarting the agent.
+- **Resumable sessions.** List and resume Codex sessions, keep multiple sessions
+  open, and cancel a running request.
+- **Images and file references.** Send text, images, and local file links from
+  clients that support them.
+- **Connected tools.** Attach MCP servers to a session and handle tool approval
+  requests in clients that support permissions.
+- **Streaming.** Receive reasoning updates and optionally stream response text.
 
-## Requirements
+## Get started
 
-- `codex` CLI installed and available in `PATH`.
-- Authenticated Codex session on the host running the bridge. Run `codex-acp login` or `codex login` to authenticate.
-- Active Codex subscription.
-
-## Quickstart
-
-Run the bridge with `npx`:
+You need the Codex CLI on `PATH`, a Codex account with access, and an
+ACP-compatible client. Install and sign in:
 
 ```bash
-npx -y codex-acp@latest
+npm install -g codex-acp@latest
+codex-acp login
 ```
 
-Inspect the ACP handshake:
+Configure your ACP client to launch this command:
 
 ```bash
-npx -y @baldaworks/acpdump -- npx -y codex-acp@latest
+codex-acp --defer-backend
 ```
 
-Start an interactive ACP session:
+If your client has separate command and arguments fields, set **command** to
+`codex-acp` and **arguments** to `["--defer-backend"]`. The client starts the
+agent and provides the chat interface.
+
+Prefer to skip the global install? Configure the client to launch:
+
+```bash
+npx -y codex-acp@latest --defer-backend
+```
+
+Prefer the standalone binary? Download an archive from
+[Releases](https://github.com/baldaworks/codex-acp/releases), extract it, and put
+`codex-acp` (or `codex-acp.exe` on Windows) on `PATH`. No npm or Go installation
+is needed for the standalone binary.
+
+## Try it in your terminal
+
+[acpchat](https://github.com/baldaworks/acpchat) provides an interactive client:
 
 ```bash
 npx -y @baldaworks/acpchat -- npx -y codex-acp@latest
 ```
 
-## Installation
+## Platforms
 
-Install globally if your ACP client expects a stable executable name:
+| Platform | Architectures |
+| --- | --- |
+| macOS | Apple Silicon (arm64), Intel (x64) |
+| Linux | arm64, x64 |
+| Windows | x64 |
 
-```bash
-npm install -g codex-acp@latest
-```
+npm selects the native binary for your platform automatically.
 
-Then run:
+## Performance
 
-```bash
-codex-acp
-```
+A measured Linux x64 run with **100 idle Codex sessions** used **13.2 MiB** of
+RSS for `codex-acp`, plus **1.1 GiB** for the Codex backend process tree.
+The local test backend completed an ACP prompt round-trip in **0.53 ms**;
+a real Codex prompt took **5.31 s**, including model generation.
 
-Install from Go source:
+These are measurements from one machine, not performance guarantees.
+See [benchmarks and methodology](docs/benchmarks.md) for session creation,
+per-session memory growth, environment details and reproduction commands.
 
-```bash
-go install github.com/baldaworks/codex-acp/cmd/codex-acp@latest
-```
+## Documentation and support
 
-To pin a release, replace `@latest` with `@v1.9.3`. Put your Go binary directory
-(`GOBIN`, or `$(go env GOPATH)/bin` by default) on `PATH`.
+- [Usage and configuration](docs/usage.md)
+- [Protocol reference](docs/json-api.md)
+- [Go installation and embedding](docs/development.md)
+- [Migration from codex-acp-bridge](docs/migration.md)
+- [Releases](https://github.com/baldaworks/codex-acp/releases)
+- [Report an issue](https://github.com/baldaworks/codex-acp/issues)
 
-Embed the command in a Go application using
-`github.com/baldaworks/codex-acp/pkg/cobracmd`; `New()` and `Command()` return
-a `*cobra.Command`.
-
-## ACP client configuration
-
-Configure your ACP client to launch:
-
-```bash
-codex-acp --defer-backend
-```
-
-`--defer-backend` allows ACP discovery and native Codex login before starting
-`codex app-server`. Codex remains required for sessions. Use manual client
-configuration; its npm package and executable are `codex-acp`.
-
-## What The Bridge Provides
-
-- ACP `initialize`, `session/new`, `session/prompt`, `session/cancel`, `session/list`, `session/close`, and `session/resume` backed by Codex app-server threads.
-- One long-lived Codex app-server process per bridge, multiplexing independent ACP sessions as Codex threads.
-- ACP terminal authentication that delegates to the native `codex login` command without handling credentials in the bridge.
-- Durable ACP session IDs mapped directly to Codex app-server `thread.id` values.
-- ACP-native model handling through stable `session/new.configOptions` and `session/set_config_option` for `model`, with legacy `session/new.models` and `session/set_model` kept for compatibility.
-- ACP session configuration for model-advertised reasoning effort values.
-- Text, image, and baseline ACP resource-link prompt blocks. Local `file://`
-  resource links are forwarded to Codex as local-path attachment metadata.
-- Optional streaming for Codex agent messages and reasoning thoughts.
-- Per-session MCP server configuration from ACP `mcpServers`.
-- Raw terminal provider/app-server failure details preserved in `session/prompt._meta.error`.
-- Strict `session/new._meta.codex` validation for Codex-specific startup options.
-
-For protocol-level details, see [docs/usage.md](https://github.com/baldaworks/codex-acp/blob/main/docs/usage.md) and [docs/json-api.md](https://github.com/baldaworks/codex-acp/blob/main/docs/json-api.md).
-
-## Runtime Options
-
-```bash
-codex-acp [flags]
-```
-
-Common flags:
-
-- `--name`: ACP agent name reported in `initialize.agentInfo.name`. Default: `codex-acp`.
-- `--defer-backend`: allow ACP initialization before validating `codex app-server`; backend-dependent requests still start Codex and return an error if it is unavailable. Default: `false`.
-- `--message-streaming`: stream Codex `agentMessage` deltas as ACP `agent_message_chunk` updates. Default: `false`.
-- `--reasoning-streaming`: stream Codex reasoning text deltas live; when disabled, raw/content token deltas stay off, while summary thoughts still publish incrementally on completed summary parts. Default: `true`.
-- `--reasoning-summary`: app-server reasoning summary level to request: `auto`, `concise`, `detailed`, or `none`. Default: `auto`.
-- `--reasoning-thoughts`: reasoning lane projected as ACP thoughts: `off`, `summary`, `content`, or `both`. Default: `summary`; when no summary is available, completed raw content is emitted as a fallback thought.
-- `--mcp-approval-policy`: process-wide policy for MCP tool-call approval prompts: `ask`, `allow`, or `deny`. Default: `ask`. It is separate from `--sandbox`: `allow` accepts the MCP tool call without an ACP permission request, `deny` declines it, and `ask` presents ACP permission options when the client supports them.
-
-Ordinary MCP `form` and `url` elicitations are forwarded as ACP elicitations only when the ACP client advertises the corresponding capability. The v1 bridge cancels `openai/form` elicitation with a diagnostic.
-- `--sandbox`: Codex sandbox mode applied both to the `codex` CLI invocation and as the default for ACP `thread/start` and `thread/resume`: `read-only`, `workspace-write`, or `danger-full-access`.
-- `--codex-args`: repeatable additional global Codex argument inserted before `app-server`.
-- `--debug`: enable debug logging.
-
-Examples:
-
-```bash
-codex-acp --name team-codex
-codex-acp --defer-backend
-codex-acp --message-streaming
-codex-acp --reasoning-thoughts=both
-codex-acp --reasoning-summary=detailed
-codex-acp --reasoning-streaming=false
-codex-acp --mcp-approval-policy=allow
-codex-acp --sandbox=workspace-write
-codex-acp --debug
-```
-
-## Codex Session Metadata
-
-Codex-specific session startup options belong under ACP `session/new.params._meta.codex`.
-
-Supported keys include:
-
-- `sandbox`
-- `approvalPolicy`
-- `approvalsReviewer`
-- `baseInstructions`
-- `developerInstructions`
-- `modelProvider`
-- `personality`
-- `serviceTier`
-- `ephemeral`
-- `profile`
-- `compactPrompt`
-- `config`
-
-Unknown keys are rejected with ACP `invalid_params`. ACP session IDs are generated by the backend; `session/new._meta.sessionId` is rejected.
-
-Use ACP `session/set_config_option` with config ID `model` for model changes instead of bridge-specific model flags; the model ID must be one advertised by Codex `model/list`. Legacy `session/set_model` remains supported for older clients. Use ACP `mcpServers` for per-session MCP servers; supported transports are `stdio` and `http`, while `sse` is rejected.
-
-## Distribution and releases
-
-The npm package `codex-acp` selects one native binary package:
-
-- `@baldaworks/codex-acp-darwin-x64`
-- `@baldaworks/codex-acp-darwin-arm64`
-- `@baldaworks/codex-acp-linux-x64`
-- `@baldaworks/codex-acp-linux-arm64`
-- `@baldaworks/codex-acp-win32-x64`
-
-The legacy package `@normahq/codex-acp-bridge` shares the same native packages
-and provides both `codex-acp` and the legacy `codex-acp-bridge` command.
-
-All seven npm packages share one version. Release `1.9.3` introduces the complete
-Go and npm migration. Canonical root Go module releases use standard `vX.Y.Z`
-tags. Historical tags and published artifacts remain unchanged.
-Maintainer instructions are in [docs/releasing.md](docs/releasing.md).
-
-Existing installations can retain their old entrypoints:
-
-```bash
-npx -y @normahq/codex-acp-bridge@latest
-npm install -g @normahq/codex-acp-bridge@latest
-go install github.com/normahq/codex-acp-bridge/cmd/codex-acp-bridge@latest
-```
-
-The legacy npm package provides `codex-acp` and `codex-acp-bridge`, both using
-one launcher. The legacy Go module preserves `pkg/cobracmd` imports and
-forwards to a pinned canonical release; no consumer `replace` directive is
-needed. Its hourly/manual synchronization can lag a new canonical release.
-See [docs/migration.md](docs/migration.md) for compatibility and update policy.
-
-## Links
-
-- Repository: https://github.com/baldaworks/codex-acp
-- Issues: https://github.com/baldaworks/codex-acp/issues
-- Releases: https://github.com/baldaworks/codex-acp/releases
-- npm package: https://www.npmjs.com/package/codex-acp
+Originally developed as
+[normahq/codex-acp-bridge](https://github.com/normahq/codex-acp-bridge).
+[MIT licensed](LICENSE).

@@ -28,6 +28,20 @@ Both entrypoints use the canonical implementation and flags. Protocol metadata
 keeps its historical `codex-acp-bridge/*` names. See [migration](migration.md)
 for Go API adapters, version synchronization and preserved historical releases.
 
+## ACP client setup and authentication
+
+Install globally with `npm install -g codex-acp@latest`, then run `codex-acp login`
+to delegate authentication to native `codex login`. An authenticated Codex session
+with account access is required on the machine running the agent.
+
+Configure the client command as `codex-acp` and arguments as `["--defer-backend"]`.
+This permits ACP discovery and terminal login before starting the backend. The
+client launches the command over stdio; running it alone does not open a chat UI.
+Codex CLI remains required for backend-dependent operations.
+
+For a pinned Go install, use `@v1.9.3` instead of `@latest`, and place `GOBIN`
+(or `$(go env GOPATH)/bin`) on `PATH`. See [Go embedding](development.md).
+
 ## Why this exists
 
 - ACP runners need a stable ACP endpoint.
@@ -74,6 +88,11 @@ acpchat -- codex-acp
 
 ## Flags
 
+- `--defer-backend`:
+  Defer Codex backend validation until a session operation. ACP initialization
+  succeeds without Codex; backend-dependent requests return an error if it is
+  unavailable. Default: `false`.
+
 - `--name`:
   ACP agent name reported in `initialize.agentInfo.name`.
   Default: `codex-acp`.
@@ -108,6 +127,23 @@ acpchat -- codex-acp
   Per-session `_meta.codex.sandbox` overrides this default.
 - `--debug`:
   Enable debug logging for the bridge process.
+
+## Supported operations
+
+- ACP `initialize`, `session/new`, `session/prompt`, `session/cancel`, `session/list`, `session/close`, and `session/resume` backed by Codex app-server threads.
+- One long-lived Codex app-server process per bridge, multiplexing independent ACP sessions as Codex threads.
+- ACP terminal authentication that delegates to the native `codex login` command without handling credentials in the bridge.
+- Durable ACP session IDs mapped directly to Codex app-server `thread.id` values.
+- ACP-native model handling through stable `session/new.configOptions` and `session/set_config_option` for `model`, with legacy `session/new.models` and `session/set_model` kept for compatibility.
+- ACP session configuration for model-advertised reasoning effort values.
+- Text, image, and baseline ACP resource-link prompt blocks. Local `file://`
+  resource links are forwarded to Codex as local-path attachment metadata.
+- Optional streaming for Codex agent messages and reasoning thoughts.
+- Per-session MCP server configuration from ACP `mcpServers`.
+- Raw terminal provider/app-server failure details preserved in `session/prompt._meta.error`.
+- Strict `session/new._meta.codex` validation for Codex-specific startup options.
+
+For request and response examples, see the [JSON API reference](json-api.md).
 
 ## Behavior
 

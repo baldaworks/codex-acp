@@ -12,5 +12,5 @@ Use `@v1.9.3` for a pinned migration release. The command delegates to the
 public `github.com/baldaworks/codex-acp/pkg/cobracmd` package and preserves
 stdio, context cancellation and nonzero failure exit status.
 
-See [installation and options](../../README.md), [usage](../../docs/usage.md),
+See [installation](../../README.md), [usage and options](../../docs/usage.md),
 [legacy compatibility](../../docs/migration.md) and [releases](../../docs/releasing.md).
