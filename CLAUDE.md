@@ -68,6 +68,6 @@ and `docs/migration.md` for the legacy Go adapters and shared npm binaries.
 ## Conventions & Patterns
 
 Use idiomatic Go, Conventional Commits and Beads. Preserve the ACP contract, historical wire keys, MIT attribution and published
-tags/artifacts. The canonical module uses normal `vX.Y.Z` tags. Update the
-legacy adapters and documentation through the migration/release workflow;
-legacy compatibility must continue without a consumer Go `replace` directive.
+tags/artifacts. The canonical module uses normal `vX.Y.Z` tags. The legacy repository is archived and its Go adapters are frozen at v1.10.1;
+do not synchronize or publish there. Maintain the deprecated npm alias through
+the canonical release workflow. Legacy Go consumers need no `replace` directive.

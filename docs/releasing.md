@@ -106,35 +106,18 @@ codex-acp version
 Also check `@latest`, public `pkg/cobracmd` consumer compilation and the native
 archive checksums. A live successful npm workflow confirms OIDC publication.
 
-## Synchronize legacy Go and GitHub archives
+## Archived legacy Go and GitHub releases
 
-The original repository retains module
-`github.com/normahq/codex-acp-bridge` and thin public API/CLI adapters. Its
-`sync-canonical-release.yml` runs hourly at minute 23 or by explicit dispatch:
+`normahq/codex-acp-bridge` is archived and read-only. Its final Go module and
+GitHub archive release is `v1.10.1`, pinned to canonical `v1.10.1`. The old
+synchronization workflow and release helpers have been retired. Do not dispatch
+legacy synchronization or publish further tags/assets in the archived repository.
 
-```bash
-gh workflow run sync-canonical-release.yml \
-  --repo normahq/codex-acp-bridge -f version=v1.10.1
-```
-
-It requires an existing non-draft, non-prerelease canonical GitHub release,
-pins that exact Go dependency, runs race tests/lint and atomically pushes an
-immutable matching tag. It uses only its own repository's GitHub token; there
-is no cross-repository write secret. Invalid input, downgrades, dirty checkouts
-and conflicting existing tags fail. Repeating a synchronized version verifies
-the dependency and preserves the original tag.
-
-The asset helper verifies canonical checksums and repackages those same binary
-bytes under historical `codex-acp-bridge-*` archive/executable names. Archives
-are reproducible and include docs/license from the legacy tag. Existing assets
-must match; they are never clobbered. The old repository does not publish npm
-or build a separate bridge implementation.
-
-Verify both pinned and latest legacy `go install`, old command-package and
-`pkg/cobracmd` imports without consumer replace directives, and legacy archive
-checksums. Initial migration preparation uses an isolated legacy checkout and
-local workspace; once the canonical tag exists, populate real dependency
-checksums before pushing the legacy module and synchronizing its release.
+Existing legacy Go install/import paths and archive URLs remain available at
+that frozen version. Future updates use canonical Go paths and GitHub releases.
+The deprecated npm alias continues to publish from this canonical repository
+with all five shared native packages; it does not require legacy repository writes.
+See [migration.md](migration.md) for the Go/npm compatibility distinction.
 
 ## Partial-release recovery
 
@@ -144,8 +127,8 @@ package/version pairs with identical contents; do not rebuild changed artifacts
 or increment a version merely to retry. Check registry propagation before
 assuming a newly published optional dependency is absent.
 
-A legacy synchronization retry verifies an existing tag, then resumes missing
-archive assets. Fix failures with additive commits and a subsequent version
-when necessary; never force-push a distributed version. Historical legacy npm
+Fix canonical release failures with additive commits and a subsequent version
+when necessary; never force-push a distributed version. Archived legacy
+tags and assets remain unchanged. Historical legacy npm
 platform packages, original tags and GitHub assets remain available. See
 [migration.md](migration.md) for compatibility policy.

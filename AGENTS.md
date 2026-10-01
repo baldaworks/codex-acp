@@ -43,7 +43,7 @@ go tool golangci-lint run
 - Use normal root-module `vX.Y.Z` tags. `scripts/release-version.sh` requires the tag to resolve to HEAD; Omnidist reads `OMNIDIST_VERSION` for all seven npm packages and the binary ldflags.
 - Omnidist profile is authoritative for `codex-acp`, legacy `@normahq/codex-acp-bridge` and five shared `@baldaworks/codex-acp-*` packages. Run `node scripts/npm-legacy-bin.cjs` after npm stage and before verify/pack.
 - npm publishing uses `.github/workflows/omnidist-release.yml` and OIDC. All seven packages require trusted publishers. Bootstrap or administration may require npm CLI web 2FA; never log credentials.
-- The legacy repository preserves its original Go module path, public API/CLI adapters and historical releases. Its hourly/manual workflow follows canonical published releases with a pinned dependency and own-repository token. It does not publish npm or maintain a copied bridge implementation.
+- The legacy repository is archived and read-only, with its Go adapters pinned to final release v1.10.1. Preserve its existing module path, tags and assets; do not synchronize or publish there. The deprecated npm alias continues to publish from this canonical repository.
 - Preserve existing published tags, npm versions and archive assets. Resume only missing exact release units after a partial publish; never overwrite accepted artifacts.
 - Update all affected docs in both repositories when migration behavior changes. See `docs/migration.md` and `docs/releasing.md`.
 

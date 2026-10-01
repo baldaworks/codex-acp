@@ -21,12 +21,13 @@ Legacy entrypoints remain available:
 ```bash
 npx -y @normahq/codex-acp-bridge@latest
 go install github.com/normahq/codex-acp-bridge/cmd/codex-acp-bridge@latest
-codex-acp-bridge --defer-backend
+codex-acp-bridge
 ```
 
-Both entrypoints use the canonical implementation and flags. Protocol metadata
+The legacy Go entrypoint is frozen at `v1.10.1`; the deprecated npm alias
+continues to follow canonical releases. Protocol metadata
 keeps its historical `codex-acp-bridge/*` names. See [migration](migration.md)
-for Go API adapters, version synchronization and preserved historical releases.
+for frozen Go API adapters, the npm alias and preserved historical releases.
 
 ## ACP client setup and authentication
 
