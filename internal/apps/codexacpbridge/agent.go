@@ -90,7 +90,6 @@ type codexACPProxyAgent struct {
 
 type promptCompletion struct {
 	stopReason acp.StopReason
-	errorMeta  any
 	usage      map[string]any
 	err        error
 }
@@ -137,14 +136,15 @@ type codexProxySessionState struct {
 
 	workerCancel context.CancelFunc
 
-	agentMessageItems   map[string]agentMessageItemState
-	reasoningItems      map[string]reasoningItemState
-	planItems           map[string]planItemState
-	planOrder           []string
-	pendingRequests     map[string]string
-	pendingMCPToolCalls map[string]pendingMCPToolCall
-	latestRateLimits    map[string]any
-	latestUsage         map[string]any
+	agentMessageItems    map[string]agentMessageItemState
+	reasoningItems       map[string]reasoningItemState
+	planItems            map[string]planItemState
+	planOrder            []string
+	pendingRequests      map[string]string
+	pendingMCPToolCalls  map[string]pendingMCPToolCall
+	latestRateLimits     map[string]any
+	latestUsage          map[string]any
+	pendingTerminalError any
 }
 
 type pendingMCPToolCall struct {
@@ -750,6 +750,10 @@ func (a *codexACPProxyAgent) Prompt(ctx context.Context, params acp.PromptReques
 
 	turnStart, err := backend.TurnStart(promptCtx, turnStartParams)
 	if err != nil {
+		var rpcErr *appServerRPCError
+		if errors.As(err, &rpcErr) {
+			return acp.PromptResponse{}, providerRPCRequestError(rpcErr)
+		}
 		return acp.PromptResponse{}, fmt.Errorf("turn/start: %w", err)
 	}
 	turnID := strings.TrimSpace(turnStart.Turn.ID)
@@ -778,9 +782,6 @@ func (a *codexACPProxyAgent) Prompt(ctx context.Context, params acp.PromptReques
 			}
 			resp := acp.PromptResponse{StopReason: completion.stopReason}
 			meta := map[string]any{}
-			if completion.errorMeta != nil {
-				meta["error"] = cloneJSONValue(completion.errorMeta)
-			}
 			usage := completion.usage
 			if usage == nil {
 				usage = a.sessionUsage(params.SessionId)
@@ -1418,7 +1419,7 @@ func (a *codexACPProxyAgent) runSessionEventLoop(ctx context.Context, sessionID 
 			}
 
 			threadID, turnID, hasActivePrompt := a.currentSessionCorrelation(sessionID)
-			done, stopReason, usage, errorMeta, err := a.handleNotification(ctx, sessionID, threadID, turnID, hasActivePrompt, event.Notification)
+			done, stopReason, usage, terminalErr, err := a.handleNotification(ctx, sessionID, threadID, turnID, hasActivePrompt, event.Notification)
 			if err != nil {
 				a.completePrompt(sessionID, promptCompletion{err: err})
 				continue
@@ -1429,8 +1430,8 @@ func (a *codexACPProxyAgent) runSessionEventLoop(ctx context.Context, sessionID 
 			if done {
 				a.completePrompt(sessionID, promptCompletion{
 					stopReason: stopReason,
-					errorMeta:  errorMeta,
 					usage:      usage,
+					err:        terminalErr,
 				})
 			}
 		}
@@ -1525,7 +1526,7 @@ func (a *codexACPProxyAgent) handleNotification(
 	turnID string,
 	hasActivePrompt bool,
 	note *appServerNotification,
-) (done bool, stopReason acp.StopReason, usage map[string]any, errorMeta any, err error) {
+) (done bool, stopReason acp.StopReason, usage map[string]any, terminalErr error, err error) {
 	params, err := decodeJSONMap(note.Params)
 	if err != nil {
 		return false, "", nil, nil, nil
@@ -1564,8 +1565,8 @@ func (a *codexACPProxyAgent) handleNotification(
 	case "error":
 		willRetry, ok := boolValue(params, "willRetry")
 		if ok && !willRetry {
-			a.logTerminalPromptError("error", sessionID, threadID, turnID, acp.StopReasonEndTurn, params["error"])
-			return true, acp.StopReasonEndTurn, usageFromTokenNotification(params), params["error"], nil
+			a.latchTerminalError(sessionID, params["error"])
+			return false, "", usageFromTokenNotification(params), nil, nil
 		}
 	case "thread/status/changed":
 	case "turn/diff/updated":
@@ -1916,10 +1917,16 @@ func (a *codexACPProxyAgent) handleNotification(
 		status := stringValue(turn, "status")
 		stopReason := stopReasonFromTurnStatus(status)
 		errorMeta := turnErrorMeta(turn, status)
+		if errorMeta == nil && strings.TrimSpace(status) == statusFailed {
+			errorMeta = a.takeTerminalError(sessionID)
+		} else {
+			a.clearTerminalError(sessionID)
+		}
 		if errorMeta != nil {
 			a.logTerminalPromptError(methodTurnCompleted, sessionID, threadID, turnID, stopReason, errorMeta)
+			return true, stopReason, usageFromTokenNotification(params), nil, a.providerRequestError(sessionID, errorMeta)
 		}
-		return true, stopReason, usageFromTokenNotification(params), errorMeta, nil
+		return true, stopReason, usageFromTokenNotification(params), nil, nil
 	}
 	return false, "", usage, nil, nil
 }
@@ -3084,6 +3091,7 @@ func (a *codexACPProxyAgent) resetTurnState(sessionID acp.SessionId) {
 		state.pendingRequests = make(map[string]string)
 		state.pendingMCPToolCalls = make(map[string]pendingMCPToolCall)
 		state.latestUsage = nil
+		state.pendingTerminalError = nil
 	}
 }
 
@@ -3675,7 +3683,7 @@ func (a *codexACPProxyAgent) setSessionRateLimits(sessionID acp.SessionId, rateL
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if state := a.sessions[sessionID]; state != nil {
-		state.latestRateLimits = cloneAnyMap(rateLimits)
+		state.latestRateLimits = mergeJSONMaps(state.latestRateLimits, rateLimits)
 	}
 }
 

@@ -209,7 +209,7 @@ For request and response examples, see the [JSON API reference](json-api.md).
 - Populates ACP `session/new.configOptions` with model and reasoning settings from app-server `model/list` when available.
 - Also populates ACP `session/new.models` for clients that still use the legacy model state.
 - Model selection is ACP-native; prefer `session/set_config_option` with config ID `model`.
-- `session/prompt._meta.error` preserves raw provider/app-server terminal error details for `error(willRetry=false)` and `turn/completed(status=failed)` when the backend provides them.
+- Terminal provider failures return an ACP JSON-RPC error. `error.data.provider_error` contains the stable `kind`, `scope`, optional `http_status` and trustworthy `retry_at`; `error.data.error` preserves the raw app-server error for diagnostics. `willRetry=true` remains internal to Codex.
 - Prompt content support:
   - Text and image prompt blocks are supported (`PromptCapabilities.image=true`).
   - Baseline ACP resource links are supported. Local `file://` URIs are decoded
