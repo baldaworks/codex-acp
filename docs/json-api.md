@@ -92,8 +92,8 @@ Reasoning summary request:
 | `turn/plan/updated` | `threadId,turnId,plan` | plan snapshot update | Authoritative whole-plan snapshot. The bridge clears delta-derived preview state and emits the provided entries as the full ACP plan replacement, including an empty list when the snapshot is empty. |
 | `turn/diff/updated` | `threadId,turnId,diff` | no ACP streaming update | Diff is not emitted as thought/message/tool content. |
 | `thread/tokenUsage/updated` | `threadId,turnId,tokenUsage` | prompt and session token usage | Forwards per-turn `tokenUsage.last.{inputTokens,outputTokens,totalTokens,cachedInputTokens,reasoningOutputTokens}` into `session/prompt.usage` and `_meta.usage` (`cachedInputTokens` -> `cachedReadTokens`, `reasoningOutputTokens` -> `thoughtTokens`). Also emits native ACP `session/update.usage_update` from current session context usage (`modelContextWindow` -> `size`, `tokenUsage.total.totalTokens` -> `used`). |
-| `account/rateLimits/updated` | `rateLimits` | account rate-limit metadata | Preserves app-server usage-limit windows in `session/prompt._meta.rateLimits`. These are account/quota limits, not per-prompt token usage. |
-| `error` | `threadId,turnId,error,willRetry` | error event | If `willRetry=false`, finalize the prompt and preserve `error` in `session/prompt._meta.error`. |
+| `account/rateLimits/updated` | `rateLimits` | account rate-limit metadata | Merges sparse updates into the session snapshot. These are account/quota limits, not per-prompt token usage. |
+| `error` | `threadId,turnId,error,willRetry` | error event | `willRetry=true` remains internal to Codex. `willRetry=false` latches the error until the matching `turn/completed`. |
 | `turn/completed` | `threadId,turn` | turn completed | Authoritative prompt terminal signal. Latest schema does not require a top-level `turnId`; if present, it must match the active turn. |
 | `serverRequest/resolved` | `threadId,requestId` | request lifecycle ack | Clear pending request state. |
 
@@ -111,10 +111,10 @@ Latest app-server schema requires `threadId` and `turn` for `turn/completed`; it
 ACP stop reason is derived from `turn.status`:
 - `completed` -> `end_turn`
 - `interrupted` -> `cancelled`
-- `failed` -> `end_turn`
+- `failed` -> ACP JSON-RPC error
 - missing, unknown, or `inProgress` -> `end_turn`
 
-`error` with `willRetry=false` is the exceptional terminal path and maps to `end_turn`; retried errors do not complete the ACP prompt. The bridge preserves provider/app-server failure details in `session/prompt._meta.error` using the raw terminal `error` payload when present, and for `turn/completed(status=failed)` it preserves `turn.error` in the same field. Usage attached to `session/prompt` completion comes from token usage on the terminal event when present, otherwise from the latest `thread/tokenUsage/updated` notification observed for the session.
+`error` with `willRetry=false` is latched and deduplicated with the matching failed `turn/completed`; retried errors do not complete the ACP prompt. A failed accepted turn returns one ACP JSON-RPC `RequestError`. Its data contains a bounded provider-neutral `provider_error` and the raw app-server error under `error`. `interrupted` remains cancellation even when the turn carries an error. Usage attached to successful `session/prompt` completion comes from token usage on the terminal event when present, otherwise from the latest `thread/tokenUsage/updated` notification observed for the session.
 
 ### Command output distinction
 
@@ -199,7 +199,7 @@ For request types without a native ACP equivalent, the adapter uses ACP `session
   - `session/resume` passes the requested ACP `sessionId` directly to `thread/resume.threadId`.
   - `thread.sessionId` remains the backend session-tree identifier and is not used as the ACP resume handle.
   - ACP `session/load` is not implemented because the bridge does not replay prior ACP history before returning.
-- Prompt completion: `turn/completed`; `error` with `willRetry=false`.
+- Prompt completion: `turn/completed`. Terminal-error input: `error` with `willRetry=false`, latched until completion.
 - Usage and metadata: `thread/tokenUsage/updated` supplies per-turn token usage; `account/rateLimits/updated` supplies account/quota limit metadata;
   `mcpServer/startupStatus/updated`.
 - Request lifecycle: `serverRequest/resolved`.
@@ -339,7 +339,7 @@ mcpServer/elicitation/request
 
 ## Known pitfalls to avoid
 
-- Do not infer end-of-turn from last message chunk, `agentMessage.phase=final_answer`, item completion, tool completion, plan updates, or diff updates; wait for `turn/completed` unless terminal `error` with `willRetry=false` arrives.
+- Do not infer end-of-turn from last message chunk, `agentMessage.phase=final_answer`, item completion, tool completion, plan updates, diff updates, or an error notification; wait for `turn/completed`.
 - Do not treat plan deltas as authoritative final plan text; only completed `plan` items are authoritative per item, and `turn/plan/updated` is authoritative for whole-plan snapshots.
 - Do not emit `agentMessage.phase=commentary` as ACP message or thought output.
 - Do not mix connection-scoped `command/exec/outputDelta` with turn-scoped command item output.

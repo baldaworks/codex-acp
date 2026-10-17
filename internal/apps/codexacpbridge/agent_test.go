@@ -3269,6 +3269,14 @@ func TestPromptStopsOnErrorNotificationWithoutRetry(t *testing.T) {
 			"additionalDetails": "stacktrace",
 		},
 	})
+	queueNotification(session, "turn/completed", map[string]any{
+		"threadId": "thr-1",
+		"turnId":   "turn-1",
+		"turn": map[string]any{
+			"id":     "turn-1",
+			"status": "failed",
+		},
+	})
 
 	conn := &fakeACPAppConnection{}
 	l := zerolog.Nop()
@@ -3281,17 +3289,16 @@ func TestPromptStopsOnErrorNotificationWithoutRetry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	promptResp, err := agent.Prompt(context.Background(), acp.PromptRequest{
+	_, err = agent.Prompt(context.Background(), acp.PromptRequest{
 		SessionId: newResp.SessionId,
 		Prompt:    []acp.ContentBlock{acp.TextBlock("hello")},
 	})
-	if err != nil {
-		t.Fatalf("Prompt() error = %v", err)
+	reqErr := requireProviderRequestError(t, err)
+	data, ok := reqErr.Data.(map[string]any)
+	if !ok {
+		t.Fatalf("RequestError.Data type = %T, want map[string]any", reqErr.Data)
 	}
-	if promptResp.StopReason != acp.StopReasonEndTurn {
-		t.Fatalf("StopReason = %q, want %q", promptResp.StopReason, acp.StopReasonEndTurn)
-	}
-	errMeta := mapValue(promptResp.Meta, "error")
+	errMeta := mapValue(data, "error")
 	if got := stringValue(errMeta, "message"); got != "fatal boom" {
 		t.Fatalf("PromptResponse.Meta.error.message = %q, want %q", got, "fatal boom")
 	}
@@ -3304,6 +3311,51 @@ func TestPromptStopsOnErrorNotificationWithoutRetry(t *testing.T) {
 	}
 }
 
+func requireProviderRequestError(t *testing.T, err error) *acp.RequestError {
+	t.Helper()
+	var reqErr *acp.RequestError
+	if !errors.As(err, &reqErr) {
+		t.Fatalf("Prompt() error type = %T, want *acp.RequestError", err)
+	}
+	if reqErr.Code != -32603 || reqErr.Message != "Provider request failed" {
+		t.Fatalf("Prompt() error = %#v, want provider failure", reqErr)
+	}
+	return reqErr
+}
+
+func TestPromptPreservesTurnStartRPCError(t *testing.T) {
+	session := newFakeAppServerSession("codex_test/1.0.0", "thr-1", "turn-1")
+	session.turnStartErr = &appServerRPCError{
+		Code:    -32000,
+		Message: "turn start rejected",
+		Data:    map[string]any{"code": "input_too_large", "limit": float64(1_000)},
+	}
+
+	l := zerolog.Nop()
+	agent := newCodexACPProxyAgent(func(context.Context, string) (appServerSession, error) {
+		return session, nil
+	}, "agent", codexAppConfig{}, &l)
+	agent.setConnection(&fakeACPAppConnection{})
+
+	newResp, err := agent.NewSession(context.Background(), acp.NewSessionRequest{Cwd: "/tmp/work"})
+	if err != nil {
+		t.Fatalf("NewSession() error = %v", err)
+	}
+	_, err = agent.Prompt(context.Background(), acp.PromptRequest{
+		SessionId: newResp.SessionId,
+		Prompt:    []acp.ContentBlock{acp.TextBlock("hello")},
+	})
+	reqErr := requireProviderRequestError(t, err)
+	data, ok := reqErr.Data.(map[string]any)
+	if !ok {
+		t.Fatalf("RequestError.Data type = %T, want map[string]any", reqErr.Data)
+	}
+	providerError := mapValue(data, "provider_error")
+	if providerError["kind"] != providerErrorInvalidRequest || providerError["scope"] != providerErrorScopeRequest {
+		t.Errorf("provider_error = %#v, want invalid request", providerError)
+	}
+}
+
 func TestPromptWarnLogsTerminalErrorNotificationWithoutRetry(t *testing.T) {
 	session := newFakeAppServerSession("codex_test/1.0.0", "thr-1", "turn-1")
 	queueNotification(session, "error", map[string]any{
@@ -3313,6 +3365,14 @@ func TestPromptWarnLogsTerminalErrorNotificationWithoutRetry(t *testing.T) {
 		"error": map[string]any{
 			"message": "fatal boom",
 			"code":    "quota_exceeded",
+		},
+	})
+	queueNotification(session, "turn/completed", map[string]any{
+		"threadId": "thr-1",
+		"turnId":   "turn-1",
+		"turn": map[string]any{
+			"id":     "turn-1",
+			"status": "failed",
 		},
 	})
 
@@ -3331,16 +3391,19 @@ func TestPromptWarnLogsTerminalErrorNotificationWithoutRetry(t *testing.T) {
 	if _, err := agent.Prompt(context.Background(), acp.PromptRequest{
 		SessionId: newResp.SessionId,
 		Prompt:    []acp.ContentBlock{acp.TextBlock("hello")},
-	}); err != nil {
-		t.Fatalf("Prompt() error = %v", err)
+	}); err == nil {
+		t.Fatal("Prompt() error = nil, want provider request error")
 	}
 
 	got := logs.String()
+	if count := strings.Count(got, `prompt completed with terminal error`); count != 1 {
+		t.Fatalf("terminal error log count = %d, want 1: %s", count, got)
+	}
 	for _, want := range []string{
 		`"level":"warn"`,
 		`"error_message":"fatal boom"`,
 		`"error_code":"quota_exceeded"`,
-		`"source":"error"`,
+		`"source":"turn/completed"`,
 		`prompt completed with terminal error`,
 	} {
 		if !strings.Contains(got, want) {
@@ -3376,17 +3439,16 @@ func TestPromptMetaIncludesTurnFailureErrorDetails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	promptResp, err := agent.Prompt(context.Background(), acp.PromptRequest{
+	_, err = agent.Prompt(context.Background(), acp.PromptRequest{
 		SessionId: newResp.SessionId,
 		Prompt:    []acp.ContentBlock{acp.TextBlock("hello")},
 	})
-	if err != nil {
-		t.Fatalf("Prompt() error = %v", err)
+	reqErr := requireProviderRequestError(t, err)
+	data, ok := reqErr.Data.(map[string]any)
+	if !ok {
+		t.Fatalf("RequestError.Data type = %T, want map[string]any", reqErr.Data)
 	}
-	if promptResp.StopReason != acp.StopReasonEndTurn {
-		t.Fatalf("StopReason = %q, want %q", promptResp.StopReason, acp.StopReasonEndTurn)
-	}
-	errMeta := mapValue(promptResp.Meta, "error")
+	errMeta := mapValue(data, "error")
 	if got := stringValue(errMeta, "message"); got != "model not supported" {
 		t.Fatalf("PromptResponse.Meta.error.message = %q, want %q", got, "model not supported")
 	}
@@ -3425,8 +3487,8 @@ func TestPromptWarnLogsTurnFailureErrorDetails(t *testing.T) {
 	if _, err := agent.Prompt(context.Background(), acp.PromptRequest{
 		SessionId: newResp.SessionId,
 		Prompt:    []acp.ContentBlock{acp.TextBlock("hello")},
-	}); err != nil {
-		t.Fatalf("Prompt() error = %v", err)
+	}); err == nil {
+		t.Fatal("Prompt() error = nil, want provider request error")
 	}
 
 	got := logs.String()
@@ -4742,6 +4804,7 @@ type fakeAppServerSession struct {
 	threadStartResp      appServerThreadStartResponse
 	threadResumeResp     appServerThreadResumeResponse
 	turnStartResp        appServerTurnStartResponse
+	turnStartErr         error
 	threadListErr        error
 	threadUnsubscribeErr error
 	modelListErr         error
@@ -4868,7 +4931,11 @@ func (f *fakeAppServerSession) TurnStart(_ context.Context, params map[string]an
 	pending := append([]appServerEvent(nil), f.pendingEvents...)
 	f.pendingEvents = nil
 	resp := f.turnStartResp
+	err := f.turnStartErr
 	f.mu.Unlock()
+	if err != nil {
+		return appServerTurnStartResponse{}, err
+	}
 
 	for _, event := range pending {
 		f.events <- event
